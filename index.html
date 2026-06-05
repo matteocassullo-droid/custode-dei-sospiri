@@ -181,9 +181,10 @@
         let songs = [];
         
         function loadSongs() {
-            db.collection("canzoni")
-                .where("disponibile", "==", true)
-                .onSnapshot((snapshot) => {
+           db.collection("canzoni")
+    .where("disponibile", "==", true)
+    .orderBy("titolo", "asc")
+    .onSnapshot((snapshot) => {
                     const loading = document.getElementById('loading');
                     const container = document.getElementById('songs-list');
                     const btn = document.getElementById('vote-btn');
