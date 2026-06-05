@@ -14,15 +14,69 @@
             padding: 20px;
         }
         .container { max-width: 500px; margin: 0 auto; }
+
+        .welcome-box {
+            background: rgba(233,69,96,0.1);
+            border: 1px solid rgba(233,69,96,0.3);
+            border-radius: 16px;
+            padding: 25px 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .welcome-box h2 {
+            color: #e94560;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .welcome-box p {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .social-links a {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+        .social-links a:hover {
+            transform: translateY(-2px);
+        }
+        .instagram {
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            color: white;
+        }
+        .facebook {
+            background: #1877f2;
+            color: white;
+        }
+        .tiktok {
+            background: #000;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
+            margin-bottom: 25px;
+            padding: 15px 0;
         }
-        .header h1 { font-size: 1.6rem; margin-bottom: 8px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 8px; }
         .header .subtitle { color: #e94560; font-size: 1rem; }
         .header .artist-name { color: #aaa; font-size: 0.85rem; margin-top: 5px; }
-        
+
         .timer-box {
             text-align: center;
             background: rgba(233,69,96,0.15);
@@ -35,7 +89,7 @@
         .timer-box.active { display: block; }
         .timer-text { color: #e94560; font-size: 0.9rem; }
         .timer-count { font-weight: bold; font-size: 1.1rem; }
-        
+
         .song-card {
             background: rgba(255,255,255,0.08);
             border-radius: 16px;
@@ -56,7 +110,7 @@
             border-color: #e94560; 
             background: rgba(233,69,96,0.15);
         }
-        
+
         .song-number {
             position: absolute;
             top: 10px;
@@ -75,7 +129,7 @@
             font-size: 0.8rem;
             margin-top: 10px;
         }
-        
+
         .btn-vote {
             width: 100%;
             padding: 18px;
@@ -99,7 +153,7 @@
             cursor: not-allowed;
             box-shadow: none;
         }
-        
+
         .success-msg {
             display: none;
             text-align: center;
@@ -113,7 +167,7 @@
         .success-msg p { color: #aaa; }
         .success-icon { font-size: 3rem; margin-bottom: 15px; }
         .countdown-text { color: #e94560; margin-top: 15px; font-size: 0.9rem; }
-        
+
         .loading { 
             text-align: center; 
             padding: 60px 20px; 
@@ -128,13 +182,13 @@
             margin: 0 auto 20px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
+
         .error-msg {
             text-align: center;
             padding: 40px 20px;
             color: #e94560;
         }
-        
+
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -143,38 +197,50 @@
             font-size: 0.8rem;
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <div class="container">
+        <div class="welcome-box">
+            <h2>✨ Sono il Custode dei Sospiri ✨</h2>
+            <p>Sei diventat* un sospiro, e io custodirò le emozioni che emanerai ascoltando questa musica!</p>
+            <p style="font-size: 0.85rem; color: #888;">Seguimi qui:</p>
+            <div class="social-links">
+                <a href="https://www.instagram.com/il_custode_dei_sospiri/" class="instagram" target="_blank">📷 Instagram</a>
+                <a href="https://www.facebook.com/share/1J9gZqrbmb/?mibextid=wwXIfr" class="facebook" target="_blank">👍 Facebook</a>
+                <a href="https://www.tiktok.com/@ilcustodedeisospiri?_r=1&_t=ZN-96xgPnmUNZG" class="tiktok" target="_blank">🎵 TikTok</a>
+            </div>
+        </div>
+
         <div class="header">
             <h1>🎸 Scegli la prossima canzone!</h1>
             <p class="subtitle">Tocca una canzone per votarla</p>
             <p class="artist-name">Custode dei Sospiri - Artista di strada</p>
         </div>
-        
+
         <div id="timer-box" class="timer-box">
             <p class="timer-text">Hai già votato! Puoi rivotare tra:</p>
             <p id="timer-count" class="timer-count">5:00</p>
         </div>
-        
+
         <div id="loading" class="loading">
             <div class="spinner"></div>
             <p>Caricamento canzoni...</p>
         </div>
-        
+
         <div id="songs-list" style="display:none;"></div>
-        
+
         <button id="vote-btn" class="btn-vote" disabled style="display:none;">
             Seleziona una canzone per votare
         </button>
-        
+
         <div id="success" class="success-msg">
             <div class="success-icon">🎉</div>
             <h2>Voto registrato!</h2>
             <p>Grazie per aver partecipato alla scelta!</p>
             <p id="countdown" class="countdown-text"></p>
         </div>
-        
+
         <div class="footer">
             <p>Scansiona il QR per votare • Aggiornamento in tempo reale</p>
         </div>
@@ -182,7 +248,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-    
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCz_XnndLWuVaWz0LdOMrRIpyJBxypoGnY",
@@ -192,15 +258,15 @@
             messagingSenderId: "382079766897",
             appId: "1:382079766897:web:338f1598ac69687c4d66d0"
         };
-        
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
+
         let selectedSongId = null;
         let hasVoted = false;
         let songs = [];
         const VOTE_COOLDOWN = 5 * 60 * 1000; // 5 minuti
-        
+
         function loadSongs() {
             db.collection("canzoni")
                 .where("disponibile", "==", true)
@@ -209,24 +275,24 @@
                     const loading = document.getElementById('loading');
                     const container = document.getElementById('songs-list');
                     const btn = document.getElementById('vote-btn');
-                    
+
                     loading.style.display = 'none';
-                    
+
                     if (snapshot.empty) {
                         container.innerHTML = '<div class="error-msg">Nessuna canzone disponibile al momento</div>';
                         container.style.display = 'block';
                         return;
                     }
-                    
+
                     songs = [];
                     container.innerHTML = '';
                     let index = 1;
-                    
+
                     snapshot.forEach((doc) => {
                         const song = doc.data();
                         const songId = doc.id;
                         songs.push({ id: songId, ...song });
-                        
+
                         const card = document.createElement('div');
                         card.className = 'song-card';
                         card.dataset.id = songId;
@@ -236,15 +302,15 @@
                             <div class="song-artist">${song.artista}</div>
                             <span class="votes-badge">${song.voti || 0} voti</span>
                         `;
-                        
+
                         card.onclick = () => selectSong(songId, card);
                         container.appendChild(card);
                         index++;
                     });
-                    
+
                     container.style.display = 'block';
                     btn.style.display = 'block';
-                    
+
                 }, (error) => {
                     console.error("Errore Firestore:", error);
                     document.getElementById('loading').style.display = 'none';
@@ -253,29 +319,29 @@
                     document.getElementById('songs-list').style.display = 'block';
                 });
         }
-        
+
         function selectSong(id, cardElement) {
             if (hasVoted) return;
-            
+
             document.querySelectorAll('.song-card').forEach(c => c.classList.remove('selected'));
             cardElement.classList.add('selected');
             selectedSongId = id;
-            
+
             const song = songs.find(s => s.id === id);
             const btn = document.getElementById('vote-btn');
             btn.disabled = false;
             btn.textContent = `🗳️ Vota: "${song.titolo}"`;
         }
-        
+
         function submitVote() {
             if (!selectedSongId || hasVoted) return;
-            
+
             const btn = document.getElementById('vote-btn');
             btn.disabled = true;
             btn.textContent = 'Registrando il voto...';
-            
+
             const songRef = db.collection("canzoni").doc(selectedSongId);
-            
+
             db.runTransaction((transaction) => {
                 return transaction.get(songRef).then((doc) => {
                     if (!doc.exists) throw "Documento non trovato";
@@ -288,12 +354,12 @@
                 document.getElementById('songs-list').style.display = 'none';
                 document.getElementById('vote-btn').style.display = 'none';
                 document.getElementById('success').style.display = 'block';
-                
+
                 const voteTime = Date.now();
                 localStorage.setItem('hasVoted', 'true');
                 localStorage.setItem('votedSong', selectedSongId);
                 localStorage.setItem('voteTime', voteTime);
-                
+
                 startCooldown(voteTime);
             }).catch((error) => {
                 console.error("Errore voto:", error);
@@ -305,16 +371,16 @@
                 }, 2000);
             });
         }
-        
+
         function startCooldown(voteTime) {
             const countdownEl = document.getElementById('countdown');
             const timerBox = document.getElementById('timer-box');
             const timerCount = document.getElementById('timer-count');
-            
+
             function updateTimer() {
                 const elapsed = Date.now() - voteTime;
                 const remaining = VOTE_COOLDOWN - elapsed;
-                
+
                 if (remaining <= 0) {
                     localStorage.removeItem('hasVoted');
                     localStorage.removeItem('votedSong');
@@ -325,28 +391,28 @@
                     location.reload();
                     return;
                 }
-                
+
                 const minutes = Math.floor(remaining / 60000);
                 const seconds = Math.floor((remaining % 60000) / 1000);
                 const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                
+
                 countdownEl.textContent = `Puoi rivotare tra ${timeStr}`;
                 timerCount.textContent = timeStr;
                 timerBox.classList.add('active');
-                
+
                 setTimeout(updateTimer, 1000);
             }
-            
+
             updateTimer();
         }
-        
+
         document.getElementById('vote-btn').addEventListener('click', submitVote);
-        
+
         const lastVote = localStorage.getItem('voteTime');
-        
+
         if (localStorage.getItem('hasVoted') === 'true' && lastVote) {
             const elapsed = Date.now() - parseInt(lastVote);
-            
+
             if (elapsed < VOTE_COOLDOWN) {
                 hasVoted = true;
                 document.getElementById('loading').style.display = 'none';
