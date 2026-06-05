@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎵 Scegli la canzone - Custode dei Sospiri</title>
+    <title>Scegli la canzone - Custode dei Sospiri</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -82,7 +82,6 @@
             margin-bottom: 8px; 
             line-height: 1.3;
         }
-        .header .subtitle { color: #e94560; font-size: 1rem; }
 
         .timer-box {
             text-align: center;
@@ -209,20 +208,19 @@
 <body>
     <div class="container">
         <div class="welcome-box">
-            <h2>✨ Sono il Custode<br>dei Sospiri ✨</h2>
+            <h2>Sono il Custode<br>dei Sospiri</h2>
             <p>Sei diventat* un sospiro, e io custodirò le emozioni che emanerai ascoltando questa musica!</p>
             <p style="font-size: 0.85rem; color: #888;">Seguimi qui:</p>
             <div class="social-links">
-                <a href="https://www.instagram.com/il_custode_dei_sospiri/" class="instagram" target="_blank">📷 Instagram</a>
-                <a href="https://www.facebook.com/share/1J9gZqrbmb/?mibextid=wwXIfr" class="facebook" target="_blank">👍 Facebook</a>
-                <a href="https://www.tiktok.com/@ilcustodedeisospiri?_r=1&_t=ZN-96xgPnmUNZG" class="tiktok" target="_blank">🎵 TikTok</a>
-                <a href="https://www.youtube.com/@Ilcustodedeisospiri" class="youtube" target="_blank">▶️ YouTube</a>
+                <a href="https://www.instagram.com/il_custode_dei_sospiri/" class="instagram" target="_blank">Instagram</a>
+                <a href="https://www.facebook.com/share/1J9gZqrbmb/?mibextid=wwXIfr" class="facebook" target="_blank">Facebook</a>
+                <a href="https://www.tiktok.com/@ilcustodedeisospiri?_r=1&_t=ZN-96xgPnmUNZG" class="tiktok" target="_blank">TikTok</a>
+                <a href="https://www.youtube.com/@Ilcustodedeisospiri" class="youtube" target="_blank">YouTube</a>
             </div>
         </div>
 
         <div class="header">
-            <h1>🎸 Scegli la prossima<br>canzone!</h1>
-            <p class="subtitle">Tocca una canzone per votarla</p>
+            <h1>Scegli la prossima<br>canzone!</h1>
         </div>
 
         <div id="timer-box" class="timer-box">
@@ -337,7 +335,7 @@
             const song = songs.find(s => s.id === id);
             const btn = document.getElementById('vote-btn');
             btn.disabled = false;
-            btn.textContent = `🗳️ Vota: "${song.titolo}"`;
+            btn.textContent = `Vota: "${song.titolo}"`;
         }
 
         function submitVote() {
@@ -370,11 +368,11 @@
                 startCooldown(voteTime);
             }).catch((error) => {
                 console.error("Errore voto:", error);
-                btn.textContent = '❌ Errore, riprova';
+                btn.textContent = 'Errore, riprova';
                 btn.disabled = false;
                 setTimeout(() => {
                     const song = songs.find(s => s.id === selectedSongId);
-                    btn.textContent = `🗳️ Vota: "${song.titolo}"`;
+                    btn.textContent = `Vota: "${song.titolo}"`;
                 }, 2000);
             });
         }
