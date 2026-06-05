@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Dashboard - Custode dei Sospiri</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #e94560;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 1.4rem; margin-bottom: 5px; }
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,200,100,0.2);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #00c864;
+        }
+        .pulse {
+            width: 8px; height: 8px;
+            background: #00c864;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .total-votes {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #e94560;
+            margin: 20px 0;
+        }
+        .total-votes-label {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        
+        .song-row {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        .song-row.winner {
+            border-left-color: #e94560;
+            background: rgba(233,69,96,0.1);
+        }
+        
+        .song-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .song-title { font-size: 1.1rem; font-weight: bold; }
+        .song-artist { color: #e94560; font-size: 0.85rem; }
+        
+        .vote-bar-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+        .vote-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #c23a51);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .vote-count {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .vote-percent {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .winner-badge {
+            display: inline-block;
+            background: #e94560;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-left: 10px;
+        }
+        
+        .btn-reset {
+            width: 100%;
+            padding: 18px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 12px;
+            background: #333;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-reset:hover { background: #e94560; }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #e94560;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Live Dashboard</h1>
+            <div class="live-badge">
+                <span class="pulse"></span>
+                <span>DIRETTA</span>
+            </div>
+        </div>
+        
+        <div id="total-votes" class="total-votes">0</div>
+        <div class="total-votes-label">voti totali</div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Caricamento voti...</p>
+        </div>
+        
+        <div id="songs-ranking"></div>
+        
+        <button class="btn-reset" onclick="resetVotes()">🔄 Azzera voti (nuovo round)</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCz_XnndLWuVaWz0LdOMrRIpyJBxypoGnY",
+            authDomain: "custode-dei-sospiri.firebaseapp.com",
+            projectId: "custode-dei-sospiri",
+            storageBucket: "custode-dei-sospiri.firebasestorage.app",
+            messagingSenderId: "382079766897",
+            appId: "1:382079766897:web:338f1598ac69687c4d66d0"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        let totalVotes = 0;
+        
+        function loadRanking() {
+            db.collection("canzoni")
+                .orderBy("voti", "desc")
+                .onSnapshot((snapshot) => {
+                    const loading = document.getElementById('loading');
+                    const container = document.getElementById('songs-ranking');
+                    loading.style.display = 'none';
+                    
+                    if (snapshot.empty) {
+                        container.innerHTML = '<p style="text-align:center;color:#888">Nessuna canzone</p>';
+                        return;
+                    }
+                    
+                    totalVotes = 0;
+                    const songs = [];
+                    snapshot.forEach((doc) => {
+                        const song = doc.data();
+                        songs.push({ id: doc.id, ...song });
+                        totalVotes += (song.voti || 0);
+                    });
+                    
+                    document.getElementById('total-votes').textContent = totalVotes;
+                    
+                    container.innerHTML = '';
+                    let pos = 1;
+                    
+                    songs.forEach((song) => {
+                        const votes = song.voti || 0;
+                        const percent = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(1) : 0;
+                        const isWinner = pos === 1 && votes > 0;
+                        
+                        const row = document.createElement('div');
+                        row.className = `song-row ${isWinner ? 'winner' : ''}`;
+                        row.innerHTML = `
+                            <div class="song-header">
+                                <div>
+                                    <span class="song-title">${song.titolo}</span>
+                                    ${isWinner ? '<span class="winner-badge">IN TESTA</span>' : ''}
+                                </div>
+                                <span class="song-artist">${song.artista}</span>
+                            </div>
+                            <div class="vote-bar-container">
+                                <div class="vote-bar" style="width: ${percent}%"></div>
+                                <span class="vote-count">${votes}</span>
+                                <span class="vote-percent">${percent}%</span>
+                            </div>
+                        `;
+                        container.appendChild(row);
+                        pos++;
+                    });
+                }, (error) => {
+                    console.error("Errore:", error);
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color:#e94560">Errore connessione</p>';
+                });
+        }
+        
+        function resetVotes() {
+            if (!confirm('Sei sicuro? Tutti i voti torneranno a 0')) return;
+            
+            db.collection("canzoni").get().then((snapshot) => {
+                const batch = db.batch();
+                snapshot.forEach((doc) => {
+                    batch.update(doc.ref, { voti: 0 });
+                });
+                return batch.commit();
+            }).then(() => {
+                alert('Voti azzerati! Nuovo round iniziato.');
+            }).catch((error) => {
+                console.error("Errore:", error);
+                alert('Errore nel reset');
+            });
+        }
+        
+        loadRanking();
+    </script>
+</body>
+</html>
