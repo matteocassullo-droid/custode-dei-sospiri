@@ -23,6 +23,19 @@
         .header .subtitle { color: #e94560; font-size: 1rem; }
         .header .artist-name { color: #aaa; font-size: 0.85rem; margin-top: 5px; }
         
+        .timer-box {
+            text-align: center;
+            background: rgba(233,69,96,0.15);
+            border: 1px solid rgba(233,69,96,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .timer-box.active { display: block; }
+        .timer-text { color: #e94560; font-size: 0.9rem; }
+        .timer-count { font-weight: bold; font-size: 1.1rem; }
+        
         .song-card {
             background: rgba(255,255,255,0.08);
             border-radius: 16px;
@@ -99,6 +112,7 @@
         .success-msg h2 { color: #00c864; margin-bottom: 10px; font-size: 1.5rem; }
         .success-msg p { color: #aaa; }
         .success-icon { font-size: 3rem; margin-bottom: 15px; }
+        .countdown-text { color: #e94560; margin-top: 15px; font-size: 0.9rem; }
         
         .loading { 
             text-align: center; 
@@ -138,6 +152,11 @@
             <p class="artist-name">Custode dei Sospiri - Artista di strada</p>
         </div>
         
+        <div id="timer-box" class="timer-box">
+            <p class="timer-text">Hai già votato! Puoi rivotare tra:</p>
+            <p id="timer-count" class="timer-count">5:00</p>
+        </div>
+        
         <div id="loading" class="loading">
             <div class="spinner"></div>
             <p>Caricamento canzoni...</p>
@@ -153,6 +172,7 @@
             <div class="success-icon">🎉</div>
             <h2>Voto registrato!</h2>
             <p>Grazie per aver partecipato alla scelta!</p>
+            <p id="countdown" class="countdown-text"></p>
         </div>
         
         <div class="footer">
@@ -179,12 +199,13 @@
         let selectedSongId = null;
         let hasVoted = false;
         let songs = [];
+        const VOTE_COOLDOWN = 5 * 60 * 1000; // 5 minuti
         
         function loadSongs() {
-           db.collection("canzoni")
-    .where("disponibile", "==", true)
-    .orderBy("titolo", "asc")
-    .onSnapshot((snapshot) => {
+            db.collection("canzoni")
+                .where("disponibile", "==", true)
+                .orderBy("titolo", "asc")
+                .onSnapshot((snapshot) => {
                     const loading = document.getElementById('loading');
                     const container = document.getElementById('songs-list');
                     const btn = document.getElementById('vote-btn');
@@ -268,9 +289,12 @@
                 document.getElementById('vote-btn').style.display = 'none';
                 document.getElementById('success').style.display = 'block';
                 
+                const voteTime = Date.now();
                 localStorage.setItem('hasVoted', 'true');
                 localStorage.setItem('votedSong', selectedSongId);
-                localStorage.setItem('voteTime', Date.now());
+                localStorage.setItem('voteTime', voteTime);
+                
+                startCooldown(voteTime);
             }).catch((error) => {
                 console.error("Errore voto:", error);
                 btn.textContent = '❌ Errore, riprova';
@@ -282,20 +306,61 @@
             });
         }
         
+        function startCooldown(voteTime) {
+            const countdownEl = document.getElementById('countdown');
+            const timerBox = document.getElementById('timer-box');
+            const timerCount = document.getElementById('timer-count');
+            
+            function updateTimer() {
+                const elapsed = Date.now() - voteTime;
+                const remaining = VOTE_COOLDOWN - elapsed;
+                
+                if (remaining <= 0) {
+                    localStorage.removeItem('hasVoted');
+                    localStorage.removeItem('votedSong');
+                    localStorage.removeItem('voteTime');
+                    hasVoted = false;
+                    timerBox.classList.remove('active');
+                    countdownEl.textContent = '';
+                    location.reload();
+                    return;
+                }
+                
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                countdownEl.textContent = `Puoi rivotare tra ${timeStr}`;
+                timerCount.textContent = timeStr;
+                timerBox.classList.add('active');
+                
+                setTimeout(updateTimer, 1000);
+            }
+            
+            updateTimer();
+        }
+        
         document.getElementById('vote-btn').addEventListener('click', submitVote);
         
         const lastVote = localStorage.getItem('voteTime');
-        const twoHours = 2 * 60 * 60 * 1000;
         
-        if (localStorage.getItem('hasVoted') === 'true' && lastVote && (Date.now() - parseInt(lastVote)) < twoHours) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('songs-list').style.display = 'none';
-            document.getElementById('vote-btn').style.display = 'none';
-            document.getElementById('success').style.display = 'block';
+        if (localStorage.getItem('hasVoted') === 'true' && lastVote) {
+            const elapsed = Date.now() - parseInt(lastVote);
+            
+            if (elapsed < VOTE_COOLDOWN) {
+                hasVoted = true;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('songs-list').style.display = 'none';
+                document.getElementById('vote-btn').style.display = 'none';
+                document.getElementById('success').style.display = 'block';
+                startCooldown(parseInt(lastVote));
+            } else {
+                localStorage.removeItem('hasVoted');
+                localStorage.removeItem('votedSong');
+                localStorage.removeItem('voteTime');
+                loadSongs();
+            }
         } else {
-            localStorage.removeItem('hasVoted');
-            localStorage.removeItem('votedSong');
-            localStorage.removeItem('voteTime');
             loadSongs();
         }
     </script>
