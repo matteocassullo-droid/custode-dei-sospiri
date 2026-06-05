@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Scegli la canzone - Custode dei Sospiri</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+        .header h1 { font-size: 1.6rem; margin-bottom: 8px; }
+        .header .subtitle { color: #e94560; font-size: 1rem; }
+        .header .artist-name { color: #aaa; font-size: 0.85rem; margin-top: 5px; }
+        
+        .song-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .song-card:hover { 
+            border-color: #e94560; 
+            transform: translateX(8px);
+            background: rgba(255,255,255,0.12);
+        }
+        .song-card.selected { 
+            border-color: #e94560; 
+            background: rgba(233,69,96,0.15);
+        }
+        
+        .song-number {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: rgba(255,255,255,0.05);
+        }
+        .song-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 6px; }
+        .song-artist { color: #e94560; font-size: 0.9rem; }
+        .votes-badge {
+            display: inline-block;
+            background: rgba(233,69,96,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        
+        .btn-vote {
+            width: 100%;
+            padding: 18px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #e94560 0%, #c23a51 100%);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(233,69,96,0.4);
+        }
+        .btn-vote:hover:not(:disabled) { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(233,69,96,0.6);
+        }
+        .btn-vote:disabled { 
+            background: #444; 
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .success-msg {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(0,200,100,0.1);
+            border-radius: 16px;
+            margin-top: 30px;
+            border: 1px solid rgba(0,200,100,0.3);
+        }
+        .success-msg h2 { color: #00c864; margin-bottom: 10px; font-size: 1.5rem; }
+        .success-msg p { color: #aaa; }
+        .success-icon { font-size: 3rem; margin-bottom: 15px; }
+        
+        .loading { 
+            text-align: center; 
+            padding: 60px 20px; 
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #e94560;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .error-msg {
+            text-align: center;
+            padding: 40px 20px;
+            color: #e94560;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #555;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎸 Scegli la prossima canzone!</h1>
+            <p class="subtitle">Tocca una canzone per votarla</p>
+            <p class="artist-name">Custode dei Sospiri - Artista di strada</p>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Caricamento canzoni...</p>
+        </div>
+        
+        <div id="songs-list" style="display:none;"></div>
+        
+        <button id="vote-btn" class="btn-vote" disabled style="display:none;">
+            Seleziona una canzone per votare
+        </button>
+        
+        <div id="success" class="success-msg">
+            <div class="success-icon">🎉</div>
+            <h2>Voto registrato!</h2>
+            <p>Grazie per aver partecipato alla scelta!</p>
+        </div>
+        
+        <div class="footer">
+            <p>Scansiona il QR per votare • Aggiornamento in tempo reale</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCz_XnndLWuVaWz0LdOMrRIpyJBxypoGnY",
+            authDomain: "custode-dei-sospiri.firebaseapp.com",
+            projectId: "custode-dei-sospiri",
+            storageBucket: "custode-dei-sospiri.firebasestorage.app",
+            messagingSenderId: "382079766897",
+            appId: "1:382079766897:web:338f1598ac69687c4d66d0"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        let selectedSongId = null;
+        let hasVoted = false;
+        let songs = [];
+        
+        function loadSongs() {
+            db.collection("canzoni")
+                .where("disponibile", "==", true)
+                .onSnapshot((snapshot) => {
+                    const loading = document.getElementById('loading');
+                    const container = document.getElementById('songs-list');
+                    const btn = document.getElementById('vote-btn');
+                    
+                    loading.style.display = 'none';
+                    
+                    if (snapshot.empty) {
+                        container.innerHTML = '<div class="error-msg">Nessuna canzone disponibile al momento</div>';
+                        container.style.display = 'block';
+                        return;
+                    }
+                    
+                    songs = [];
+                    container.innerHTML = '';
+                    let index = 1;
+                    
+                    snapshot.forEach((doc) => {
+                        const song = doc.data();
+                        const songId = doc.id;
+                        songs.push({ id: songId, ...song });
+                        
+                        const card = document.createElement('div');
+                        card.className = 'song-card';
+                        card.dataset.id = songId;
+                        card.innerHTML = `
+                            <span class="song-number">#${index}</span>
+                            <div class="song-title">${song.titolo}</div>
+                            <div class="song-artist">${song.artista}</div>
+                            <span class="votes-badge">${song.voti || 0} voti</span>
+                        `;
+                        
+                        card.onclick = () => selectSong(songId, card);
+                        container.appendChild(card);
+                        index++;
+                    });
+                    
+                    container.style.display = 'block';
+                    btn.style.display = 'block';
+                    
+                }, (error) => {
+                    console.error("Errore Firestore:", error);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('songs-list').innerHTML = 
+                        '<div class="error-msg">Errore di connessione. Ricarica la pagina.</div>';
+                    document.getElementById('songs-list').style.display = 'block';
+                });
+        }
+        
+        function selectSong(id, cardElement) {
+            if (hasVoted) return;
+            
+            document.querySelectorAll('.song-card').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            selectedSongId = id;
+            
+            const song = songs.find(s => s.id === id);
+            const btn = document.getElementById('vote-btn');
+            btn.disabled = false;
+            btn.textContent = `🗳️ Vota: "${song.titolo}"`;
+        }
+        
+        function submitVote() {
+            if (!selectedSongId || hasVoted) return;
+            
+            const btn = document.getElementById('vote-btn');
+            btn.disabled = true;
+            btn.textContent = 'Registrando il voto...';
+            
+            const songRef = db.collection("canzoni").doc(selectedSongId);
+            
+            db.runTransaction((transaction) => {
+                return transaction.get(songRef).then((doc) => {
+                    if (!doc.exists) throw "Documento non trovato";
+                    const newVotes = (doc.data().voti || 0) + 1;
+                    transaction.update(songRef, { voti: newVotes });
+                    return newVotes;
+                });
+            }).then(() => {
+                hasVoted = true;
+                document.getElementById('songs-list').style.display = 'none';
+                document.getElementById('vote-btn').style.display = 'none';
+                document.getElementById('success').style.display = 'block';
+                
+                localStorage.setItem('hasVoted', 'true');
+                localStorage.setItem('votedSong', selectedSongId);
+                localStorage.setItem('voteTime', Date.now());
+            }).catch((error) => {
+                console.error("Errore voto:", error);
+                btn.textContent = '❌ Errore, riprova';
+                btn.disabled = false;
+                setTimeout(() => {
+                    const song = songs.find(s => s.id === selectedSongId);
+                    btn.textContent = `🗳️ Vota: "${song.titolo}"`;
+                }, 2000);
+            });
+        }
+        
+        document.getElementById('vote-btn').addEventListener('click', submitVote);
+        
+        const lastVote = localStorage.getItem('voteTime');
+        const twoHours = 2 * 60 * 60 * 1000;
+        
+        if (localStorage.getItem('hasVoted') === 'true' && lastVote && (Date.now() - parseInt(lastVote)) < twoHours) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('songs-list').style.display = 'none';
+            document.getElementById('vote-btn').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+        } else {
+            localStorage.removeItem('hasVoted');
+            localStorage.removeItem('votedSong');
+            localStorage.removeItem('voteTime');
+            loadSongs();
+        }
+    </script>
+</body>
+</html>
